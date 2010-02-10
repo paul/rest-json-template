@@ -2,7 +2,6 @@ require 'active_support/ordered_hash'
 require 'tilt'
 require 'yajl'
 
-
 module RestJson
 
   class Template < Tilt::Template
@@ -20,7 +19,7 @@ module RestJson
     def restjson_for(resource, &blk)
       builder = RestJson::Builder.new(resource)
       yield builder
-      builder.render
+      builder
     end
   end
 

@@ -1,7 +1,8 @@
+require 'action_view/template'
 
-module RestJson
+module RestfulJson
   module Rails
-    class RestJson < ActionView::TemplateHandlers::TemplateHandler
+    class RestJson < ActionView::Template::Handler
 
       def self.call(template)
         new(template).compile
@@ -15,7 +16,7 @@ module RestJson
         "obj = #{@template.source}\nobj.to_obj"
       end
 
-      ActionView::Template.register_template_handler :restjson, self
+      ActionView::Template.register_template_handler :rfj, self
     end
 
     module Helpers
@@ -28,32 +29,32 @@ module RestJson
       ActionView::Helpers.send(:include, self)
     end
 
-    ActionController::Renderers.add :ssj_collection do |resources, options|
-      self.content_type = Mime::SSJ
+    ActionController::Renderers.add :rfj_collection do |resources, options|
+      self.content_type = Mime::JSON
       json = {
         :href => request.url,
-        :items => render(:ssj => resources)
+        :items => render(:rfj => resources)
       }
       json = ActiveSupport::JSON.encode(json)
       self.response_body = json
     end
 
-    ActionController::Renderers.add :ssj do |resource, options|
+    ActionController::Renderers.add :rfj do |resource, options|
       options[:partial] = resource
 
       view_context = ActionView::Base.for_controller(self)
-      output = SsjPartialRenderer.new(view_context, options, nil).render
+      output = RfjPartialRenderer.new(view_context, options, nil).render
 
       if resource.is_a?(Array)
         # we're probably rendering a collection to be used in a collection document
         return output
       else
-        self.content_type = Mime::SSJ
+        self.content_type = Mime::JSON
         self.response_body = ActiveSupport::JSON.encode(output)
       end
     end
 
-    class SsjPartialRenderer < ActionView::Partials::PartialRenderer
+    class RfjPartialRenderer < ActionView::Partials::PartialRenderer
 
       def render_collection
         @template = template = find_template

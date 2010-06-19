@@ -48,5 +48,13 @@ module RestJson
     end
     alias to_obj to_h
 
+    def method_missing(meth, *args)
+      if @resource.respond_to?(meth)
+        @resource.send(meth, *args)
+      else
+        super
+      end
+    end
+
   end
 end

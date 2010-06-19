@@ -20,8 +20,8 @@ module RestfulJson
     end
 
     module Helpers
-      def restjson_for(resource, &blk)
-        builder = RestJson::Builder.new(resource)
+      def restful_json_for(resource, &blk)
+        builder = ::RestJson::Builder.new(resource)
         yield builder
         builder
       end
@@ -42,10 +42,10 @@ module RestfulJson
     ActionController::Renderers.add :rfj do |resource, options|
       options[:partial] = resource
 
-      view_context = ActionView::Base.for_controller(self)
+      view_context = self.view_context
       output = RfjPartialRenderer.new(view_context, options, nil).render
 
-      if resource.is_a?(Array)
+      if resource.respond_to?(:each)
         # we're probably rendering a collection to be used in a collection document
         return output
       else
@@ -57,23 +57,21 @@ module RestfulJson
     class RfjPartialRenderer < ActionView::Partials::PartialRenderer
 
       def render_collection
-        @template = template = find_template
-
         return nil if @collection.blank?
 
-        result = template ? collection_with_template(template) : collection_without_template
-        # This forces the results into a string, so don't do it!
-        #result.join(spacer).html_safe!
-      end
-
-      def _find_template(path)
-        if controller = @view.controller
-          prefix = controller.controller_path unless path.include?(?/)
+        if @options.key?(:spacer_template)
+          spacer = find_template(@options[:spacer_template]).render(@view, @locals)
         end
 
-        #@view.find(path, {:formats => @view.formats}, prefix, true)
-        # Pretend we're not a partial, so we find the non-underscored template
-        @view.find(path, {:formats => @view.formats}, prefix, false)
+        result = @template ? collection_with_template : collection_without_template
+        #result.join(spacer).html_safe
+      end
+
+
+      def find_template(path=@path)
+        return path unless path.is_a?(String)
+        prefix = @view.controller_path unless path.include?(?/)
+        @view.find_template(path, prefix, false)
       end
 
     end

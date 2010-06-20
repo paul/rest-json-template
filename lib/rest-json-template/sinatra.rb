@@ -1,24 +1,50 @@
 require 'tilt'
 
-module RestJson
-  module SinatraHelper
-    def restjson_for(resource, &blk)
-      builder = RestJson::Builder.new(resource)
-      yield builder
-      builder
-    end
-  end
-  Sinatra.helpers(SinatraHelper)
+module Sinatra
+  module RestfulJson
 
+    module Helpers
+
+      def rfj_collection(resources)
+        json = {
+          :href => request.url,
+          :items => resources.map { |resource| rfj(resource, :skip_encoding => true) }
+        }
+
+        response['Content-Type'] = "application/json"
+        json = Yajl::Encoder.encode(json)
+      end
+
+      def rfj(resource, options = {})
+        template = resource.class.to_s.downcase
+        p template
+        render :rfj, template, options, locals
+      end
+
+    end
+
+    def self.registered(app)
+      app.helpers(RestfulJson::Helpers)
+    end
+
+  end
+
+  register RestfulJson
+end
+
+module RestfulJson
   class Template < Tilt::Template
 
-    def compile!
+    def prepare
     end
 
     def evaluate(scope, locals, &block)
-      scope.instance_eval(data)
+      code = ::RestJson::Engine.new
+
     end
+
+
   end
 
-  Tilt.register('restjson', Template)
+  Tilt.register(:rfj, Template)
 end

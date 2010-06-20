@@ -3,6 +3,24 @@ require 'yajl'
 
 module RestJson
 
+  class Engine
+
+    def initialize(data, options = {})
+      @data = data
+      @skip_encoding = options[:skip_encoding]
+      @builder = Builder.new(data)
+    end
+
+    def render(scope, locals, &block)
+      output = @builder.render(
+      if @skip_encoding
+        @builder.render(scope, locals).attr
+
+      end
+
+    end
+  end
+
   class Builder
 
     def initialize(resource)
